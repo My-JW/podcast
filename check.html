@@ -1,8 +1,129 @@
 <!DOCTYPE html>
-<html>
-<body style="background:green;color:white;text-align:center;padding:100px;">
-<h1>✅ SITE ACTIF !</h1>
-<p>GitHub Pages fonctionne</p>
-<p>URL: <script>document.write(window.location.href)</script></p>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <title>Lecteur Synchro Dynamique</title>
+    <style>
+        body { font-family: sans-serif; display: flex; flex-direction: column; align-items: center; background: #1a1a1a; color: white; padding-top: 50px; }
+        #image-container { 
+            width: 800px; 
+            height: auto; 
+            background: #000; 
+            display: flex; 
+            justify-content: center; 
+            align-items: center; 
+            border: 3px solid #333; 
+            overflow: hidden; 
+        }
+        img { 
+            max-width: 100%; 
+            max-height: 100%; 
+            object-fit: contain; 
+            cursor: pointer; 
+        }
+        audio { width: 640px; }
+        .fullscreen-text {
+            text-align: center;
+            color: rgba(255, 255, 255, 0.7);
+            font-size: 14px;
+            margin-top: 8px;
+            margin-bottom: 20px;
+        }
+        .image-wrapper {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="image-wrapper">
+        <div id="image-container">
+            <img id="viewer" src="0.jpg">
+        </div>
+        <div class="fullscreen-text">Cliquez sur l'image pour plein écran</div>
+    </div>
+
+    <audio id="audioPlayer" controls>
+        <source src="audio.mp3" type="audio/mpeg">
+        <source src="audio.m4a" type="audio/mp4">
+    </audio>
+
+    <script>
+        const audio = document.getElementById('audioPlayer');
+        const img = document.getElementById('viewer');
+        
+        // Stocke la dernière image qui a réussi à charger
+        let lastValidImage = "0.jpg";
+
+        audio.addEventListener('timeupdate', () => {
+            syncImage();
+        });
+
+        // On écoute aussi l'événement 'seeked' (quand on clique dans la barre de progression)
+        audio.addEventListener('seeked', () => {
+            syncImage();
+        });
+
+        // Fonction pour le plein écran
+        img.addEventListener('click', toggleFullscreen);
+
+        function toggleFullscreen() {
+            if (!document.fullscreenElement) {
+                if (img.requestFullscreen) {
+                    img.requestFullscreen();
+                } else if (img.webkitRequestFullscreen) {
+                    img.webkitRequestFullscreen();
+                } else if (img.msRequestFullscreen) {
+                    img.msRequestFullscreen();
+                }
+            } else {
+                if (document.exitFullscreen) {
+                    document.exitFullscreen();
+                } else if (document.webkitExitFullscreen) {
+                    document.webkitExitFullscreen();
+                } else if (document.msExitFullscreen) {
+                    document.msExitFullscreen();
+                }
+            }
+        }
+
+        function syncImage() {
+            const now = Math.floor(audio.currentTime);
+            
+            // On va chercher l'image correspondant à la seconde actuelle, 
+            // ou la plus proche précédente.
+            findLastAvailableImage(now);
+        }
+
+        function findLastAvailableImage(second) {
+            // On boucle à l'envers depuis la seconde actuelle vers 0
+            // pour trouver l'image la plus proche
+            for (let i = second; i >= 0; i--) {
+                const testSrc = i + ".jpg";
+                
+                // On utilise une technique de pré-chargement pour vérifier l'existence
+                const tempImg = new Image();
+                tempImg.src = testSrc;
+                
+                // Si l'image est déjà en cache ou valide
+                if (tempImg.complete && tempImg.naturalWidth !== 0) {
+                    updateDisplay(testSrc);
+                    break;
+                }
+                
+                // Note : Cette boucle est rapide pour le navigateur car il utilise le cache.
+                // Pour optimiser, on peut aussi lister les images dans un tableau comme avant.
+            }
+        }
+
+        function updateDisplay(src) {
+            if (img.src.indexOf(src) === -1) {
+                img.src = src;
+                console.log("Image affichée : " + src);
+            }
+        }
+    </script>
 </body>
 </html>
